@@ -28,6 +28,8 @@ extern int alarmEnabled;
 extern int alarmCount;
 extern state s;
 
+unsigned int frameNumber = 0;
+
 ////////////////////////////////////////////////
 // LLOPEN
 ////////////////////////////////////////////////
@@ -112,7 +114,6 @@ int llopen(LinkLayer connectionParameters)
 
             if (s == STOP_RCV) {
                 STOP = TRUE;
-                printf("Connection established\n");
             }
         }            
     }
@@ -135,6 +136,9 @@ int llopen(LinkLayer connectionParameters)
         printf("%d bytes written\n", bytes);
         sleep(1);
     }
+    if (alarmCount >= connectionParameters.nRetransmissions) {
+        return 0;
+    }
     return 1;
 }
 
@@ -143,21 +147,27 @@ int llopen(LinkLayer connectionParameters)
 ////////////////////////////////////////////////
 int llwrite(const unsigned char *buf, int bufSize)
 {
-    // TODO
-    /*
-    recebe pacote de dados buf1 = [D1...Dn]
-    gera BCC2 = D1 ^ D2 ... ^ Dn
-    - buf2 = [D1...Dn, BCC2]
+        // TODO
+        /*
+        recebe pacote de dados buf1 = [D1...Dn]
+        gera BCC2 = D1 ^ D2 ... ^ Dn
+        - buf2 = [D1...Dn, BCC2]
 
-    percorre buf2 e implementa stuffing
-    - se encontrar 0x7E substitui por 0x7D 0x5E
-    - se encontrar 0x7D substitui por 0x7D 0x5D
+        percorre buf2 e implementa stuffing
+        - se encontrar 0x7E substitui por 0x7D 0x5E
+        - se encontrar 0x7D substitui por 0x7D 0x5D
 
-    cria trama I(0) ou I(1) 
+        cria trama I(0) ou I(1) 
 
-    */
+        */
 
-    return 0;
+    int frameSize = 6 + bufSize;
+    unsigned char *frame = (unsigned char*)malloc(frameSize);
+    frame[0] = FLAG;
+    frame[1] = A_SENDER;
+    frame[2] = frameNumber;
+
+    return -1;
 }
 
 ////////////////////////////////////////////////

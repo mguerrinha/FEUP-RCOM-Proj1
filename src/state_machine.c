@@ -7,14 +7,12 @@ void state_machine(unsigned char byte, LinkLayerRole role) {
         switch (s)
         {
             case START:
-                printf("START\n");
                 if (byte == FLAG) {
                     s = FLAG_RCV;
                 }
                 break;
             
             case FLAG_RCV:
-                printf("FLAG_RCV\n");
                 if (byte == A_SENDER) {
                     s = A_RCV;
                 }
@@ -24,7 +22,6 @@ void state_machine(unsigned char byte, LinkLayerRole role) {
                 break;
             
             case A_RCV:
-                printf("A_RCV\n");
                 if (byte == C_SET) {
                     s = C_RCV;
                 }
@@ -34,7 +31,6 @@ void state_machine(unsigned char byte, LinkLayerRole role) {
                 break;
             
             case C_RCV:
-                printf("C_RCV\n");
                 if (byte == (A_SENDER ^ C_SET)) {
                     s = BCC_OK;
                 }
@@ -44,7 +40,6 @@ void state_machine(unsigned char byte, LinkLayerRole role) {
                 break;
             
             case BCC_OK:
-                printf("BCC_OK\n");
                 if (byte == FLAG) {
                     s = STOP_RCV;
                 }
