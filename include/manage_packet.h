@@ -3,10 +3,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+#include <string.h>
 
-unsigned char *getControlPacket(const unsigned int control, const char *filename, unsigned int filesize, int bufSize);
+unsigned char *getControlPacket(const unsigned int control, const char *filename, unsigned int filesize, unsigned int *bufSize);
 
 unsigned char *getData(FILE *file, size_t fileSize);
 
-unsigned char *getPacketData(unsigned int sequence, unsigned char *data, int dataSize, int *packetSize);
+unsigned char *getPacketData(unsigned int sequence, unsigned char *data, int dataSize, unsigned int *packetSize);
 #endif

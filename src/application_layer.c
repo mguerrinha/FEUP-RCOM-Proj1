@@ -89,7 +89,7 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
 
         unsigned char *controlStart = getControlPacket(1, filename, fileStat.st_size, &bufSize);
 
-        if (llwrite(controlStart, bufSize) == -1) {
+        if (llwrite(controlStart, bufSize) == 0) {
             perror("Error: Start packet error\n");
             exit(-1);
         }
@@ -103,7 +103,7 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
             int dataSize = bytesLeft > (size_t) MAX_PAYLOAD_SIZE ? MAX_PAYLOAD_SIZE : bytesLeft;
             unsigned char *data = (unsigned char *) malloc(dataSize);
             memcpy(data, content, dataSize);
-            int packetSize;
+            unsigned int packetSize;
             unsigned char *packet = getPacketData(sequence, data, dataSize, &packetSize);
 
             if (llwrite(packet, packetSize) == -1) {

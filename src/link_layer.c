@@ -28,6 +28,9 @@ extern int alarmEnabled;
 extern int alarmCount;
 extern state s;
 
+int nRetransmissions;
+int timeout;
+
 unsigned int frameNumber = 0;
 
 ////////////////////////////////////////////////
@@ -35,6 +38,8 @@ unsigned int frameNumber = 0;
 ////////////////////////////////////////////////
 int llopen(LinkLayer connectionParameters)
 {
+    nRetransmissions = connectionParameters.nRetransmissions;
+    timeout = connectionParameters.timeout;
 
     int fd = openSerialPort(connectionParameters.serialPort, connectionParameters.baudRate);
     if (fd < 0) {
@@ -84,32 +89,32 @@ int llopen(LinkLayer connectionParameters)
 
     // TODO
     STOP = FALSE;
-    int n_bytes = 0;
+    int n_bytes_received = 0;
 
     if (connectionParameters.role == LlTx) {
         unsigned char buf_set[BUF_SIZE] = {FLAG, A_SENDER, C_SET, A_SENDER^C_SET, FLAG};
         unsigned char buf_ua[BUF_SIZE];
         setSignal();
 
-        while (STOP == FALSE && alarmCount < connectionParameters.nRetransmissions)
+        while (STOP == FALSE && alarmCount < nRetransmissions)
         {
             if (alarmEnabled == FALSE) {
                 int bytes = writeBytesSerialPort(buf_set, BUF_SIZE);
                 printf("%d bytes written\n", bytes);
                 sleep(1);
-                setAlarm(connectionParameters.timeout);
+                setAlarm(timeout);
             }
 
             s = START;
-            n_bytes = 0;
+            n_bytes_received = 0;
 
-            while (s != STOP_RCV && n_bytes <= 5)
+            while (s != STOP_RCV && n_bytes_received <= 5)
             {
                 int bytes = readByteSerialPort(buf_ua);
-                n_bytes++;
+                n_bytes_received++;
                 printf("Bytes received: %d\n", bytes);
                 if (bytes > 0)
-                    state_machine(buf_ua[0], connectionParameters.role);
+                    state_machine_connection(buf_ua[0], connectionParameters.role);
             }
 
             if (s == STOP_RCV) {
@@ -127,7 +132,7 @@ int llopen(LinkLayer connectionParameters)
             int bytes = readByteSerialPort(buf_set);
             printf("Bytes received: %d\n", bytes);
             if (bytes > 0) {
-                state_machine(buf_set[0], connectionParameters.role);
+                state_machine_connection(buf_set[0], connectionParameters.role);
             }
         }
 
@@ -136,7 +141,7 @@ int llopen(LinkLayer connectionParameters)
         printf("%d bytes written\n", bytes);
         sleep(1);
     }
-    if (alarmCount >= connectionParameters.nRetransmissions) {
+    if (alarmCount >= nRetransmissions) {
         return 0;
     }
     return 1;
@@ -166,8 +171,72 @@ int llwrite(const unsigned char *buf, int bufSize)
     frame[0] = FLAG;
     frame[1] = A_SENDER;
     frame[2] = frameNumber;
+    frame[3] = A_SENDER ^ frameNumber;
+    memcpy(frame+4, buf, bufSize);
+    
+    unsigned char BCC2 = buf[0];
+    for (unsigned int i = 1; i < bufSize; i++) {
+        BCC2 ^= buf[i];
+    }
 
-    return -1;
+    int j = 4;
+    for (unsigned int i = 0; i < bufSize; i++) {
+        if (buf[i] == FLAG) {
+            frame = realloc(frame, frameSize+1);
+            frame[j++] = ESC;
+            frame[j++] = FLAG ^ STUFF;
+        }
+        else if (buf[i] == ESC) {
+            frame = realloc(frame, frameSize+1);
+            frame[j++] = ESC;
+            frame[j++] = ESC ^ STUFF;
+        }
+        else {
+            frame[j++] = buf[i];
+        }
+    }
+
+    frame[j++] = BCC2;
+    frame[j] = FLAG;
+
+    alarmEnabled = FALSE;
+    alarmCount = 0;
+    int n_bytes_received = 0;
+
+    unsigned char buf_rc[BUF_SIZE];
+
+    STOP = FALSE;
+
+
+    while (STOP == FALSE && alarmCount < nRetransmissions)
+    {
+        if (alarmEnabled == FALSE) {
+            int bytes = writeBytesSerialPort(frame, frameSize);
+            printf("%d bytes written\n", bytes);
+            sleep(1);
+            setAlarm(timeout);
+        }
+
+        s = START;
+        n_bytes_received = 0;
+
+        while (n_bytes_received <= 5 && s == STOP_RCV)
+        {
+            int bytes = readByteSerialPort(buf_rc);
+            n_bytes_received++;
+            printf("Bytes received: %d\n", bytes);
+            if (bytes > 0)
+                state_machine_transmitter(buf_rc[0]);
+        }
+
+        if (s = STOP_RCV) {
+            STOP = TRUE;
+        }
+    }
+    if (alarmCount >= nRetransmissions) {
+        return 0;
+    }
+    return 1;
 }
 
 ////////////////////////////////////////////////
@@ -175,7 +244,7 @@ int llwrite(const unsigned char *buf, int bufSize)
 ////////////////////////////////////////////////
 int llread(unsigned char *packet)
 {
-    // TODO
+    
 
     return 0;
 }

@@ -1,7 +1,22 @@
 #include "manage_packet.h"
 
 unsigned char *getControlPacket(const unsigned int control, const char *filename, unsigned int filesize, unsigned int *bufSize) {
-    int L1 = (int) ceil(log2f((float)filesize)/8.0);
+    int L1;
+    unsigned int numBits = 0;
+    unsigned int auxFileSize = filesize;
+
+    if (auxFileSize == 0) {
+        L1 = 1;
+    }
+
+    while (auxFileSize > 0)
+    {
+        numBits++;
+        auxFileSize >>= 1;
+    }
+
+    L1 = (numBits + 7) / 8;
+    
     int L2 = strlen(filename);
     *bufSize = 5 + L1 + L2;
 
@@ -43,7 +58,7 @@ unsigned char *getData(FILE *file, size_t fileSize) {
     return content;
 }
 
-unsigned char *getPacketData(unsigned int sequence, unsigned char *data, int dataSize, int *packetSize) {
+unsigned char *getPacketData(unsigned int sequence, unsigned char *data, int dataSize, unsigned int *packetSize) {
     *packetSize = 4 + dataSize;
     unsigned char *packet = (unsigned char *) malloc(*packetSize);
 
