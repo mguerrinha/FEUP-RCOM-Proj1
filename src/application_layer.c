@@ -65,11 +65,13 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
     }
 
     printf("Connection Established\n");
+    FILE* file;
+    unsigned char *packet;
 
     switch (connectionParam.role)
     {
     case LlTx:
-        FILE* file = fopen(filename, "rb");
+        file = fopen(filename, "rb");
 
         if (file == NULL) {
             perror("File not found\n");
@@ -126,7 +128,7 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
         break;
     
     case LlRx:
-        unsigned char *packet = (unsigned char *) malloc(MAX_PAYLOAD_SIZE);
+        packet = (unsigned char *) malloc(MAX_PAYLOAD_SIZE);
         
         break;
 
