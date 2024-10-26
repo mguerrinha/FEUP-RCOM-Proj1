@@ -56,10 +56,8 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
     connectionParam.timeout = timeout;
 
     printf("LLOPEN\n");
-    
-    int connect = llopen(connectionParam);
-    
-    if (connect == 0) {
+        
+    if (llopen(connectionParam)) {
         perror("Erro: Connection Failed\n");
         exit(-1);
     }
@@ -91,7 +89,7 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
 
         unsigned char *controlStart = getControlPacket(1, filename, fileStat.st_size, &bufSize);
 
-        if (llwrite(controlStart, bufSize) == 0) {
+        if (llwrite(controlStart, bufSize)) {
             perror("Error: Start packet error\n");
             exit(-1);
         }
@@ -108,7 +106,7 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
             unsigned int packetSize;
             unsigned char *packet = getPacketData(sequence, data, dataSize, &packetSize);
 
-            if (llwrite(packet, packetSize) == -1) {
+            if (llwrite(packet, packetSize)) {
                 perror("Error: error in data packets\n");
                 exit(-1);
             }
@@ -119,7 +117,7 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
         }
         
         unsigned char *controlEnd = getControlPacket(3, filename, fileStat.st_size, &bufSize);
-        if (llwrite(controlEnd, bufSize) == -1) {
+        if (llwrite(controlEnd, bufSize)) {
             perror("Error: End packet error\n");
             exit(-1);
         }
@@ -129,7 +127,12 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
     
     case LlRx:
         packet = (unsigned char *) malloc(MAX_PAYLOAD_SIZE);
+        while (1)
+        {
+            llread(packet);
+        }
         
+
         break;
 
     default:

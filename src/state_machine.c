@@ -3,7 +3,7 @@
 state s;
 extern unsigned int frameNumber;
 
-void state_machine_connection(unsigned char byte, LinkLayerRole role) {
+int state_machine_connection(unsigned char byte, LinkLayerRole role) {
     if (role == LlRx) {
         switch (s)
         {
@@ -19,6 +19,7 @@ void state_machine_connection(unsigned char byte, LinkLayerRole role) {
                 }
                 else {
                     s = START;
+                    return 1;
                 }
                 break;
             
@@ -28,6 +29,7 @@ void state_machine_connection(unsigned char byte, LinkLayerRole role) {
                 }
                 else {
                     s = START;
+                    return 1;
                 }
                 break;
             
@@ -37,6 +39,7 @@ void state_machine_connection(unsigned char byte, LinkLayerRole role) {
                 }
                 else {
                     s = START;
+                    return 1;
                 }
                 break;
             
@@ -46,10 +49,12 @@ void state_machine_connection(unsigned char byte, LinkLayerRole role) {
                 }
                 else {
                     s = START;
+                    return 1;
                 }
                 break;
             default:
                 s = START;
+                return 1;
                 break;
         }
     }
@@ -68,6 +73,7 @@ void state_machine_connection(unsigned char byte, LinkLayerRole role) {
                 }
                 else {
                     s = START;
+                    return 1;
                 }
                 break;
             
@@ -77,6 +83,7 @@ void state_machine_connection(unsigned char byte, LinkLayerRole role) {
                 }
                 else {
                     s = START;
+                    return 1;
                 }
                 break;
             
@@ -86,6 +93,7 @@ void state_machine_connection(unsigned char byte, LinkLayerRole role) {
                 }
                 else {
                     s = START;
+                    return 1;
                 }
                 break;
             
@@ -95,16 +103,18 @@ void state_machine_connection(unsigned char byte, LinkLayerRole role) {
                 }
                 else {
                     s = START;
+                    return 1;
                 }
                 break;
             default:
-                s = START;
                 break;
         }
     }
+    return 0;
 }
 
-void state_machine_transmitter(unsigned char byte) {
+int state_machine_transmitter(unsigned char byte) {
+    unsigned char control = (frameNumber % 2 == 0) ? C_RR1 : C_RR0;
     switch (s)
     {
     case START:
@@ -119,34 +129,27 @@ void state_machine_transmitter(unsigned char byte) {
         }
         else {
             s = START;
+            return 1;
         }
         break;
     
     case A_RCV:
-        if (byte == C_RR0 || byte == C_RR1) {
+        if (byte == control) {
             s = C_RCV;
         }
         else {
             s = START;
+            return 1;
         }
         break;
     
     case C_RCV:
-        if (frameNumber % 2 == 0) {
-            if (byte == C_RR1 ^ A_RECEIVER) {
-                s = BCC_OK;
-            }
-            else {
-                s = START;
-            }
+        if (byte == (A_RECEIVER ^ control)) {
+            s = BCC_OK;
         }
-        else if (frameNumber % 2 == 1) {
-            if (byte == C_RR0 ^ A_RECEIVER) {
-                s = BCC_OK;
-            }
-            else {
-                s = START;
-            }
+        else {
+            s = START;
+            return 1;
         }
         break;
     
@@ -156,10 +159,82 @@ void state_machine_transmitter(unsigned char byte) {
         }
         else {
             s = START;
+            return 1;
         }
         break;
     default:
-        s = START;
+        break;
+    }
+}
+
+int state_machine_receiver(unsigned char byte, unsigned char *packet) {
+    unsigned char control = (frameNumber % 2 == 0) ? C_0 : C_1;
+    int i = 0;
+    switch (s)
+    {
+    case START:
+        if (byte == FLAG) {
+            s = FLAG_RCV;
+        }
+        break;
+    
+    case FLAG_RCV:
+        if (byte == A_SENDER) {
+            s = A_RCV;
+        }
+        else {
+            s = START;
+            return 1;
+        }
+        break;
+    
+    case A_RCV:
+        if (byte == control) {
+            s = C_RCV;
+        }
+        else {
+            s = START;
+            return 1;
+        }
+        break;
+    
+    case C_RCV:
+        if (byte == (A_RECEIVER ^ control)) {
+            s = BCC1_OK;
+        }
+        else {
+            s = START;
+            return 1;
+        }
+        break;
+
+    case DATA_PACKET:
+        if (byte == ESC) {
+            s = ESC_RCV;
+        }
+        else if (byte == FLAG) {
+            unsigned char bcc2 = packet[0];
+            
+        }
+        else {
+            packet[i] = byte;    
+        }
+        break;
+    
+    case ESC_RCV:
+        s = DATA_PACKET;
+        if (byte == (FLAG ^ STUFF)) {
+            packet[i] = FLAG;
+        }
+        else if (byte == (ESC ^ STUFF)) {
+            packet[i] = ESC;
+        }
+        else {
+            s = START;
+            return 1;
+        }
+
+    default:
         break;
     }
 }

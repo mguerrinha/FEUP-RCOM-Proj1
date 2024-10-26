@@ -43,10 +43,6 @@ unsigned char *getControlPacket(const unsigned int control, const char *filename
 
 unsigned char *getData(FILE *file, size_t fileSize) {
     unsigned char *content = (unsigned char *) malloc (fileSize);
-    if (content == NULL) {
-        perror("Memory allocation failed\n");
-        return NULL;
-    }
 
     size_t bytesRead = fread(content, 1, fileSize, file);
     if (bytesRead != fileSize) {
@@ -58,7 +54,7 @@ unsigned char *getData(FILE *file, size_t fileSize) {
     return content;
 }
 
-unsigned char *getPacketData(unsigned int sequence, unsigned char *data, int dataSize, unsigned int *packetSize) {
+unsigned char *getPacketData(unsigned int sequence, unsigned char *data, unsigned int dataSize, unsigned int *packetSize) {
     *packetSize = 4 + dataSize;
     unsigned char *packet = (unsigned char *) malloc(*packetSize);
 

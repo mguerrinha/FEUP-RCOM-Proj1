@@ -9,11 +9,19 @@ typedef enum {
     A_RCV,
     C_RCV,
     BCC_OK,
+    BCC1_OK,
+    DATA_PACKET,
+    ESC_RCV,
+    DATA_RCV,
+    BCC2_OK,
     STOP_RCV
 } state;
 
-void state_machine_connection(unsigned char byte, LinkLayerRole role);
+int state_machine_connection(unsigned char byte, LinkLayerRole role);
 
-void state_machine_transmitter(unsigned char byte);
+int state_machine_transmitter(unsigned char byte);
+
+int state_machine_receiver(unsigned char byte, unsigned char *packet);
+
 
 #endif
