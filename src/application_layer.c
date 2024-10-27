@@ -64,6 +64,7 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
 
     printf("Connection Established\n");
     FILE* file;
+    FILE* newFile;
     unsigned char *packet;
 
     switch (connectionParam.role)
@@ -102,7 +103,7 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
         {
             int dataSize = bytesLeft > (size_t) DATA_SIZE ? DATA_SIZE : bytesLeft;
             printf("--------------------\n");
-            printf("Bytes Left %ld / %ld\n", bytesLeft, fileStat.st_size);
+            printf("Bytes Left %ld\n", bytesLeft);
             printf("--------------------\n");
             unsigned char *data = (unsigned char *) malloc(dataSize);
             memcpy(data, content, dataSize);
@@ -133,11 +134,14 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
         packet = (unsigned char *) malloc(MAX_PAYLOAD_SIZE);
         while (1)
         {
-            if (!llread(packet)) {
-                printf("Start Packet\n");
+            if (!llread(packet) && packet[0] == 1) {
+                printf ("START PACKET RCV\n");
                 break;
             }
         }
+
+        newFile = fopen((char *) filename, "wb+");
+
         while (1)
         {
             if (!llread(packet)) {
