@@ -98,9 +98,12 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
         unsigned char *content = getData(file, fileStat.st_size);
         size_t bytesLeft = fileStat.st_size;
 
-        while (bytesLeft >= 0)
+        while (bytesLeft > 0)
         {
-            int dataSize = bytesLeft > (size_t) MAX_PAYLOAD_SIZE ? MAX_PAYLOAD_SIZE : bytesLeft;
+            int dataSize = bytesLeft > (size_t) DATA_SIZE ? DATA_SIZE : bytesLeft;
+            printf("--------------------\n");
+            printf("Bytes Left %ld / %ld\n", bytesLeft, fileStat.st_size);
+            printf("--------------------\n");
             unsigned char *data = (unsigned char *) malloc(dataSize);
             memcpy(data, content, dataSize);
             unsigned int packetSize;
@@ -111,12 +114,13 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
                 exit(-1);
             }
 
-            bytesLeft -= (size_t) MAX_PAYLOAD_SIZE;
+            bytesLeft -= dataSize;
             content += dataSize;
             sequence = (sequence + 1) % 100;
         }
         
         unsigned char *controlEnd = getControlPacket(3, filename, fileStat.st_size, &bufSize);
+        printf("End Packet\n");
         if (llwrite(controlEnd, bufSize)) {
             perror("Error: End packet error\n");
             exit(-1);
@@ -129,8 +133,22 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
         packet = (unsigned char *) malloc(MAX_PAYLOAD_SIZE);
         while (1)
         {
-            llread(packet);
+            if (!llread(packet)) {
+                printf("Start Packet\n");
+                break;
+            }
         }
+        while (1)
+        {
+            if (!llread(packet)) {
+                printf("Packet\n");
+            }
+            if (packet[0] == 3) {
+                printf("END PACKET RCV\n");
+                break;
+            }
+        }
+        
         
 
         break;

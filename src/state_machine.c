@@ -1,7 +1,12 @@
 #include "state_machine.h"
+#include <stdio.h>
+
 
 state s;
 extern unsigned int frameNumber;
+extern int i;
+unsigned char bcc2;
+unsigned char bcc2_rcv;
 
 int state_machine_connection(unsigned char byte, LinkLayerRole role) {
     if (role == LlRx) {
@@ -165,11 +170,12 @@ int state_machine_transmitter(unsigned char byte) {
     default:
         break;
     }
+    return 0;
 }
 
 int state_machine_receiver(unsigned char byte, unsigned char *packet) {
     unsigned char control = (frameNumber % 2 == 0) ? C_0 : C_1;
-    int i = 0;
+    
     switch (s)
     {
     case START:
@@ -199,8 +205,8 @@ int state_machine_receiver(unsigned char byte, unsigned char *packet) {
         break;
     
     case C_RCV:
-        if (byte == (A_RECEIVER ^ control)) {
-            s = BCC1_OK;
+        if (byte == (A_SENDER ^ control)) {
+            s = DATA_PACKET;
         }
         else {
             s = START;
@@ -213,11 +219,24 @@ int state_machine_receiver(unsigned char byte, unsigned char *packet) {
             s = ESC_RCV;
         }
         else if (byte == FLAG) {
-            unsigned char bcc2 = packet[0];
-            
+            bcc2_rcv = packet[i-1];
+            bcc2 = packet[0];
+            for (int j = 1; j < i-1; j++) {
+                bcc2 ^= packet[j];
+            }
+            if (bcc2 == bcc2_rcv) {
+                printf("GOOD\n");
+                s = STOP_RCV;
+                return 0;
+            }
+            else {
+                s = START;
+                return 1;
+            }
         }
         else {
-            packet[i] = byte;    
+            packet[i] = byte;
+            i++;  
         }
         break;
     
@@ -225,16 +244,20 @@ int state_machine_receiver(unsigned char byte, unsigned char *packet) {
         s = DATA_PACKET;
         if (byte == (FLAG ^ STUFF)) {
             packet[i] = FLAG;
+            i++;
         }
         else if (byte == (ESC ^ STUFF)) {
             packet[i] = ESC;
+            i++;
         }
         else {
             s = START;
             return 1;
         }
+        break;
 
     default:
         break;
     }
+    return 0;
 }
