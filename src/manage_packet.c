@@ -66,3 +66,20 @@ unsigned char *getPacketData(unsigned int sequence, unsigned char *data, unsigne
 
     return packet;
 }
+
+size_t parseControlPacket(unsigned char *packet) {
+    unsigned char nFileSizeBytes = packet[2];
+    unsigned char fileSizeAux[nFileSizeBytes];
+    memcpy(fileSizeAux, packet+3, nFileSizeBytes);
+
+    size_t fileSize = 0;
+    for (unsigned int i = 0; i < nFileSizeBytes; i++) {
+        fileSize |= (fileSizeAux[nFileSizeBytes-i-1] << (8*i));
+    }
+    return fileSize;
+}
+
+void parseData(unsigned char *packet, int packetSize, unsigned char *buffer) {
+    memcpy(buffer, packet+4, packetSize-4);
+    buffer += packetSize+4;
+}

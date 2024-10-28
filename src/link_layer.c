@@ -289,9 +289,9 @@ int llread(unsigned char *packet)
     printf("%d bytes written\n", bytes);
     
     if (s != STOP_RCV) {
-        return 1;
+        return -1;
     }
-    return 0;
+    return i-1;
 }
 
 ////////////////////////////////////////////////

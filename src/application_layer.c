@@ -67,6 +67,7 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
     FILE* newFile;
     unsigned char *packet;
 
+
     switch (connectionParam.role)
     {
     case LlTx:
@@ -131,33 +132,50 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
         break;
     
     case LlRx:
-        packet = (unsigned char *) malloc(MAX_PAYLOAD_SIZE);
+        
+        packet = (unsigned char *) malloc(DATA_SIZE+4);
+        int packetSize = -1;
+
         while (1)
         {
-            if (!llread(packet) && packet[0] == 1) {
+            packetSize = -1;
+            packetSize = llread(packet);
+            if (packetSize > 0 && packet[0] == 1) {
                 printf ("START PACKET RCV\n");
                 break;
             }
         }
 
+        size_t fileSize = parseControlPacket(packet);
+
         newFile = fopen((char *) filename, "wb+");
+
 
         while (1)
         {
-            if (!llread(packet)) {
-                printf("Packet\n");
-            }
+            packetSize = -1;
+            packetSize = llread(packet);
+            printf("PACKET SIZE %d\n", packetSize);
+
             if (packet[0] == 3) {
                 printf("END PACKET RCV\n");
                 break;
             }
+            else if (packetSize > 0) {
+                printf("Packet number %x\n", packet[1]);
+                unsigned char *buffer = (unsigned char*)malloc(packetSize-4);
+                parseData(packet, packetSize, buffer);
+                fwrite(buffer, sizeof(unsigned char), packetSize-4, newFile);
+                free(buffer);
+            }
+            else continue;
         }
-        
-        
 
+        fclose(newFile);
         break;
 
     default:
+        exit(-1);
         break;
     }
 

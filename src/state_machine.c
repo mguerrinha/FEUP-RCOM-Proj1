@@ -190,6 +190,7 @@ int state_machine_receiver(unsigned char byte, unsigned char *packet) {
         }
         else {
             s = START;
+            printf("ADRESS FAILED\n");
             return 1;
         }
         break;
@@ -200,6 +201,7 @@ int state_machine_receiver(unsigned char byte, unsigned char *packet) {
         }
         else {
             s = START;
+            printf("CONTROL FAILED\n");
             return 1;
         }
         break;
@@ -210,6 +212,7 @@ int state_machine_receiver(unsigned char byte, unsigned char *packet) {
         }
         else {
             s = START;
+            printf("BCC1 FAILED\n");
             return 1;
         }
         break;
@@ -225,12 +228,12 @@ int state_machine_receiver(unsigned char byte, unsigned char *packet) {
                 bcc2 ^= packet[j];
             }
             if (bcc2 == bcc2_rcv) {
-                printf("GOOD\n");
                 s = STOP_RCV;
                 return 0;
             }
             else {
                 s = START;
+                printf("BCC2 FAILED");
                 return 1;
             }
         }
