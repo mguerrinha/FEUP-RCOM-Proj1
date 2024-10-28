@@ -22,6 +22,9 @@ int state_machine_connection(unsigned char byte, LinkLayerRole role) {
                 if (byte == A_SENDER) {
                     s = A_RCV;
                 }
+                else if (byte == FLAG) {
+                    s = FLAG_RCV;
+                }
                 else {
                     s = START;
                     return 1;
@@ -32,6 +35,9 @@ int state_machine_connection(unsigned char byte, LinkLayerRole role) {
                 if (byte == C_SET) {
                     s = C_RCV;
                 }
+                else if (byte == FLAG) {
+                    s = FLAG_RCV;
+                }
                 else {
                     s = START;
                     return 1;
@@ -41,6 +47,9 @@ int state_machine_connection(unsigned char byte, LinkLayerRole role) {
             case C_RCV:
                 if (byte == (A_SENDER ^ C_SET)) {
                     s = BCC_OK;
+                }
+                else if (byte == FLAG) {
+                    s = FLAG_RCV;
                 }
                 else {
                     s = START;
@@ -76,6 +85,9 @@ int state_machine_connection(unsigned char byte, LinkLayerRole role) {
                 if (byte == A_RECEIVER) {
                     s = A_RCV;
                 }
+                else if (byte == FLAG) {
+                    s = FLAG_RCV;
+                }
                 else {
                     s = START;
                     return 1;
@@ -86,6 +98,9 @@ int state_machine_connection(unsigned char byte, LinkLayerRole role) {
                 if (byte == C_UA) {
                     s = C_RCV;
                 }
+                else if (byte == FLAG) {
+                    s = FLAG_RCV;
+                }
                 else {
                     s = START;
                     return 1;
@@ -95,6 +110,9 @@ int state_machine_connection(unsigned char byte, LinkLayerRole role) {
             case C_RCV:
                 if (byte == (A_RECEIVER ^ C_UA)) {
                     s = BCC_OK;
+                }
+                else if (byte == FLAG) {
+                    s = FLAG_RCV;
                 }
                 else {
                     s = START;
@@ -132,6 +150,9 @@ int state_machine_transmitter(unsigned char byte) {
         if (byte == A_RECEIVER) {
             s = A_RCV;
         }
+        else if (byte == FLAG) {
+            s = FLAG_RCV;
+        }
         else {
             s = START;
             return 1;
@@ -142,6 +163,9 @@ int state_machine_transmitter(unsigned char byte) {
         if (byte == control) {
             s = C_RCV;
         }
+        else if (byte == FLAG) {
+            s = FLAG_RCV;
+        }
         else {
             s = START;
             return 1;
@@ -151,6 +175,9 @@ int state_machine_transmitter(unsigned char byte) {
     case C_RCV:
         if (byte == (A_RECEIVER ^ control)) {
             s = BCC_OK;
+        }
+        else if (byte = FLAG) {
+            s = FLAG_RCV;
         }
         else {
             s = START;
@@ -188,6 +215,9 @@ int state_machine_receiver(unsigned char byte, unsigned char *packet) {
         if (byte == A_SENDER) {
             s = A_RCV;
         }
+        else if (byte == FLAG) {
+            s = FLAG_RCV;
+        }
         else {
             s = START;
             printf("ADRESS FAILED\n");
@@ -199,6 +229,9 @@ int state_machine_receiver(unsigned char byte, unsigned char *packet) {
         if (byte == control) {
             s = C_RCV;
         }
+        else if (byte == FLAG) {
+            s = FLAG_RCV;
+        }
         else {
             s = START;
             printf("CONTROL FAILED\n");
@@ -209,6 +242,9 @@ int state_machine_receiver(unsigned char byte, unsigned char *packet) {
     case C_RCV:
         if (byte == (A_SENDER ^ control)) {
             s = DATA_PACKET;
+        }
+        else if (byte == FLAG) {
+            s = FLAG_RCV;
         }
         else {
             s = START;
@@ -229,7 +265,7 @@ int state_machine_receiver(unsigned char byte, unsigned char *packet) {
             }
             if (bcc2 == bcc2_rcv) {
                 s = STOP_RCV;
-                printf("GOOD");
+                printf("GOOD\n");
                 return 0;
             }
             else {
@@ -262,6 +298,7 @@ int state_machine_receiver(unsigned char byte, unsigned char *packet) {
         break;
 
     default:
+        s = START;
         break;
     }
     return 0;

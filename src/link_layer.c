@@ -252,6 +252,7 @@ int llwrite(const unsigned char *buf, int bufSize)
         {
             int bytes = readByteSerialPort(buf_rc);
             if (bytes > 0) {
+                alarmCount = 0;
                 printf ("Byte received %x\n", buf_rc[0]);
                 if (state_machine_transmitter(buf_rc[0])) {
                     break;
@@ -285,9 +286,9 @@ int llread(unsigned char *packet)
     while (s != STOP_RCV)
     {
         int bytes = readByteSerialPort(buf_rc);
-        printf("BYTE RECEIVED %x\n", buf_rc[0]);
-
+        
         if (bytes > 0) {
+            printf("BYTE RECEIVED %x\n", buf_rc[0]);
             if (state_machine_receiver(buf_rc[0], packet)) {
                 buf[2] = (frameNumber % 2 == 0) ? C_REJ0 : C_REJ1;
                 break;
