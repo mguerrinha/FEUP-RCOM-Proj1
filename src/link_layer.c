@@ -212,7 +212,22 @@ int llwrite(const unsigned char *buf, int bufSize)
         }
     }
 
-    frame[j++] = BCC2;
+    if (BCC2 == FLAG) {
+        frame = realloc(frame, frameSize+1);
+        frame[j++] = ESC;
+        frame[j++] = FLAG ^ STUFF;
+        frameSize++;
+    }
+    else if (BCC2 == ESC) {
+        frame = realloc(frame, frameSize+1);
+        frame[j++] = ESC;
+        frame[j++] = ESC ^ STUFF;
+        frameSize++;
+    }
+    else {
+        frame[j++] = BCC2;
+    }
+
     frame[j] = FLAG;
 
     alarmEnabled = FALSE;
@@ -223,7 +238,7 @@ int llwrite(const unsigned char *buf, int bufSize)
     STOP = FALSE;
 
 
-    while (STOP == FALSE && alarmCount < nRetransmissions)
+    while (STOP == FALSE && alarmCount <= nRetransmissions)
     {
         if (alarmEnabled == FALSE) {
             int bytes = writeBytesSerialPort(frame, frameSize);
@@ -270,6 +285,7 @@ int llread(unsigned char *packet)
     while (s != STOP_RCV)
     {
         int bytes = readByteSerialPort(buf_rc);
+        printf("BYTE RECEIVED %x\n", buf_rc[0]);
 
         if (bytes > 0) {
             if (state_machine_receiver(buf_rc[0], packet)) {

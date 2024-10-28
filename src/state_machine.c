@@ -229,11 +229,12 @@ int state_machine_receiver(unsigned char byte, unsigned char *packet) {
             }
             if (bcc2 == bcc2_rcv) {
                 s = STOP_RCV;
+                printf("GOOD");
                 return 0;
             }
             else {
                 s = START;
-                printf("BCC2 FAILED");
+                printf("BCC2 FAILED\n");
                 return 1;
             }
         }
@@ -255,6 +256,7 @@ int state_machine_receiver(unsigned char byte, unsigned char *packet) {
         }
         else {
             s = START;
+            printf("ESC?????\n");
             return 1;
         }
         break;

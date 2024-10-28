@@ -162,7 +162,6 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
                 break;
             }
             else if (packetSize > 0) {
-                printf("Packet number %x\n", packet[1]);
                 unsigned char *buffer = (unsigned char*)malloc(packetSize-4);
                 parseData(packet, packetSize, buffer);
                 fwrite(buffer, sizeof(unsigned char), packetSize-4, newFile);
