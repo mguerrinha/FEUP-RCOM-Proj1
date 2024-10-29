@@ -417,6 +417,9 @@ int llclose(int showStatistics)
         }
         setAlarm(0);
         printf("STATISTICS\n");
+        printf("----------------------------\n");
+        printf("NUMBER FRAMES SENT --> %d\n", frameNumber);
+        printf("----------------------------\n");
     }
 
     int clstat = closeSerialPort();
