@@ -57,7 +57,7 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
 
     printf("LLOPEN\n");
         
-    if (llopen(connectionParam)) {
+    if (llopen(connectionParam) == -1) {
         perror("Erro: Connection Failed\n");
         exit(-1);
     }
@@ -91,7 +91,7 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
 
         unsigned char *controlStart = getControlPacket(1, filename, fileStat.st_size, &bufSize);
 
-        if (llwrite(controlStart, bufSize)) {
+        if (llwrite(controlStart, bufSize) == -1) {
             perror("Error: Start packet error\n");
             exit(-1);
         }
@@ -104,14 +104,14 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
         {
             int dataSize = bytesLeft > (size_t) DATA_SIZE ? DATA_SIZE : bytesLeft;
             printf("--------------------\n");
-            printf("Bytes Left %ld\n", bytesLeft);
+            printf("Bytes Left %ld de %ld\n", bytesLeft, fileStat.st_size);
             printf("--------------------\n");
             unsigned char *data = (unsigned char *) malloc(dataSize);
             memcpy(data, content, dataSize);
             unsigned int packetSize;
             unsigned char *packet = getPacketData(sequence, data, dataSize, &packetSize);
 
-            if (llwrite(packet, packetSize)) {
+            if (llwrite(packet, packetSize) == -1) {
                 perror("Error: error in data packets\n");
                 exit(-1);
             }
@@ -122,15 +122,24 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
         }
         
         unsigned char *controlEnd = getControlPacket(3, filename, fileStat.st_size, &bufSize);
-        printf("End Packet\n");
-        if (llwrite(controlEnd, bufSize)) {
+        printf("END PACKET\n");
+        if (llwrite(controlEnd, bufSize) == -1) {
             perror("Error: End packet error\n");
             exit(-1);
         }
 
-        llclose(1);
-        break;
-    
+        int close = llclose(1);
+
+        if (close == -1) {
+            perror ("Error closing serial port\n");
+            exit(-1);
+        }
+
+        if (close == 1) {
+            perror("End connection failed\n");
+            exit(-1);
+        }
+        break;    
     case LlRx:
         
         packet = (unsigned char *) malloc(DATA_SIZE+4);
@@ -147,6 +156,7 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
         }
 
         size_t fileSize = parseControlPacket(packet);
+        size_t totalReceived = 0;
 
         newFile = fopen((char *) filename, "wb+");
 
@@ -155,13 +165,20 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
         {
             packetSize = -1;
             packetSize = llread(packet);
-            printf("PACKET SIZE %d\n", packetSize);
 
             if (packet[0] == 3) {
                 printf("END PACKET RCV\n");
+                if (llclose(1) == -1) {
+                    perror ("Error closing serial port\n");
+                    exit(-1);
+                }
                 break;
             }
             else if (packetSize > 0) {
+                totalReceived += packetSize-4;
+                printf("----------------\n");
+                printf("Progression %ld/%ld\n", totalReceived, fileSize);
+                printf("----------------\n");
                 unsigned char *buffer = (unsigned char*)malloc(packetSize-4);
                 parseData(packet, packetSize, buffer);
                 fwrite(buffer, sizeof(unsigned char), packetSize-4, newFile);

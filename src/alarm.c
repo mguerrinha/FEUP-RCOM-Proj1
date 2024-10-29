@@ -7,14 +7,16 @@
 #include <stdio.h>
 #include "alarm.h"
 
-int alarmEnabled = FALSE;
+volatile int alarmEnabled = FALSE;
 int alarmCount = 0;
+int nRetransmissionsTotal;
 
 // Alarm function handler
 void alarmHandler(int signal)
 {
     alarmEnabled = FALSE;
     alarmCount++;
+    nRetransmissionsTotal++;
 
     printf("Alarm #%d\n", alarmCount);
 }

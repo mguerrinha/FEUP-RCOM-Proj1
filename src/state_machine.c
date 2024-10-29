@@ -136,6 +136,134 @@ int state_machine_connection(unsigned char byte, LinkLayerRole role) {
     return 0;
 }
 
+int state_machine_end_connection(unsigned char byte, volatile int receiver) {
+    if (receiver) {
+        switch (s)
+        {
+            case START:
+                if (byte == FLAG) {
+                    s = FLAG_RCV;
+                }
+                break;
+            
+            case FLAG_RCV:
+                if (byte == A_SENDER) {
+                    s = A_RCV;
+                }
+                else if (byte == FLAG) {
+                    s = FLAG_RCV;
+                }
+                else {
+                    s = START;
+                    return 1;
+                }
+                break;
+            
+            case A_RCV:
+                if (byte == C_DISC || byte == C_UA) {
+                    s = C_RCV;
+                }
+                else if (byte == FLAG) {
+                    s = FLAG_RCV;
+                }
+                else {
+                    s = START;
+                    return 1;
+                }
+                break;
+            
+            case C_RCV:
+                if (byte == (A_SENDER ^ C_DISC) || byte == (A_SENDER ^ C_UA)) {
+                    s = BCC_OK;
+                }
+                else if (byte == FLAG) {
+                    s = FLAG_RCV;
+                }
+                else {
+                    s = START;
+                    return 1;
+                }
+                break;
+            
+            case BCC_OK:
+                if (byte == FLAG) {
+                    s = STOP_RCV;
+                }
+                else {
+                    s = START;
+                    return 1;
+                }
+                break;
+            default:
+                s = START;
+                return 1;
+                break;
+        }
+    }
+    else if (!receiver) {
+        switch (s)
+        {
+        case START:
+                if (byte == FLAG) {
+                    s = FLAG_RCV;
+                }
+                break;
+            
+            case FLAG_RCV:
+                if (byte == A_RECEIVER) {
+                    s = A_RCV;
+                }
+                else if (byte == FLAG) {
+                    s = FLAG_RCV;
+                }
+                else {
+                    s = START;
+                    return 1;
+                }
+                break;
+            
+            case A_RCV:
+                if (byte == C_DISC) {
+                    s = C_RCV;
+                }
+                else if (byte == FLAG) {
+                    s = FLAG_RCV;
+                }
+                else {
+                    s = START;
+                    return 1;
+                }
+                break;
+            
+            case C_RCV:
+                if (byte == (A_RECEIVER ^ C_DISC)) {
+                    s = BCC_OK;
+                }
+                else if (byte == FLAG) {
+                    s = FLAG_RCV;
+                }
+                else {
+                    s = START;
+                    return 1;
+                }
+                break;
+            
+            case BCC_OK:
+                if (byte == FLAG) {
+                    s = STOP_RCV;
+                }
+                else {
+                    s = START;
+                    return 1;
+                }
+                break;
+            default:
+                break;
+        }
+    }
+    return 0;
+}
+
 int state_machine_transmitter(unsigned char byte) {
     unsigned char control = (frameNumber % 2 == 0) ? C_RR1 : C_RR0;
     switch (s)
@@ -176,7 +304,7 @@ int state_machine_transmitter(unsigned char byte) {
         if (byte == (A_RECEIVER ^ control)) {
             s = BCC_OK;
         }
-        else if (byte = FLAG) {
+        else if (byte == FLAG) {
             s = FLAG_RCV;
         }
         else {
@@ -265,7 +393,6 @@ int state_machine_receiver(unsigned char byte, unsigned char *packet) {
             }
             if (bcc2 == bcc2_rcv) {
                 s = STOP_RCV;
-                printf("GOOD\n");
                 return 0;
             }
             else {

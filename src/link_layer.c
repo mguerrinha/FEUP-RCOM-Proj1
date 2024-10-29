@@ -24,12 +24,14 @@
 #define BUF_SIZE 5
 
 volatile int STOP = FALSE;
-extern int alarmEnabled;
+extern volatile int alarmEnabled;
 extern int alarmCount;
 extern state s;
 
 int nRetransmissions;
+extern int nRetransmissionsTotal;
 int timeout;
+volatile int receiver = -1;
 
 unsigned int frameNumber;
 int i = 0;
@@ -40,11 +42,12 @@ int i = 0;
 int llopen(LinkLayer connectionParameters)
 {
     nRetransmissions = connectionParameters.nRetransmissions;
+    nRetransmissionsTotal = 0;
     timeout = connectionParameters.timeout;
 
     int fd = openSerialPort(connectionParameters.serialPort, connectionParameters.baudRate);
     if (fd < 0) {
-        return 1;
+        return -1;
     }
 
     struct termios oldtio;
@@ -54,7 +57,7 @@ int llopen(LinkLayer connectionParameters)
     if (tcgetattr(fd, &oldtio) == -1)
     {
         perror("tcgetattr");
-        exit(-1);
+        return -1;
     }
 
     // Clear struct for new port settings
@@ -83,15 +86,15 @@ int llopen(LinkLayer connectionParameters)
     if (tcsetattr(fd, TCSANOW, &newtio) == -1)
     {
         perror("tcsetattr");
-        exit(-1);
+        return -1;
     }
 
     printf("New termios structure set\n");
 
-    // TODO
     STOP = FALSE;
 
     if (connectionParameters.role == LlTx) {
+        receiver = FALSE;
         unsigned char buf_set[BUF_SIZE] = {FLAG, A_SENDER, C_SET, A_SENDER^C_SET, FLAG};
         unsigned char buf_ua[BUF_SIZE];
         setSignal();
@@ -121,6 +124,7 @@ int llopen(LinkLayer connectionParameters)
         }            
     }
     else if (connectionParameters.role == LlRx) {
+        receiver = TRUE;
         unsigned char buf_set[BUF_SIZE];
 
         s = START;
@@ -140,10 +144,10 @@ int llopen(LinkLayer connectionParameters)
         printf("%d bytes written\n", bytes);
     }
     if (alarmCount > nRetransmissions) {
-        return 1;
+        return -1;
     }
     frameNumber = 0;
-    return 0;
+    return fd;
 }
 
 ////////////////////////////////////////////////
@@ -169,14 +173,13 @@ int llwrite(const unsigned char *buf, int bufSize)
     unsigned char *frame = (unsigned char*)malloc(frameSize);
     if (frame == NULL) {
         perror("Memory allocation failed\n");
-        return 1;
+        return -1;
     }
 
     // Config the transmitter frame
 
     frame[0] = FLAG;
     frame[1] = A_SENDER;
-    printf("FRAMENUMBER %d\n", frameNumber);
     if (frameNumber % 2 == 0) {
         frame[2] = C_0;
     }
@@ -237,12 +240,13 @@ int llwrite(const unsigned char *buf, int bufSize)
 
     STOP = FALSE;
 
+    int bytesWritten;
+
 
     while (STOP == FALSE && alarmCount <= nRetransmissions)
     {
         if (alarmEnabled == FALSE) {
-            int bytes = writeBytesSerialPort(frame, frameSize);
-            printf("%d bytes written\n", bytes);
+            bytesWritten = writeBytesSerialPort(frame, frameSize);
             setAlarm(timeout);
         }
 
@@ -253,7 +257,6 @@ int llwrite(const unsigned char *buf, int bufSize)
             int bytes = readByteSerialPort(buf_rc);
             if (bytes > 0) {
                 alarmCount = 0;
-                printf ("Byte received %x\n", buf_rc[0]);
                 if (state_machine_transmitter(buf_rc[0])) {
                     break;
                 }
@@ -265,10 +268,10 @@ int llwrite(const unsigned char *buf, int bufSize)
         }
     }
     if (alarmCount >= nRetransmissions) {
-        return 1;
+        return -1;
     }
     frameNumber++;
-    return 0;
+    return bytesWritten;
 }
 
 ////////////////////////////////////////////////
@@ -288,7 +291,6 @@ int llread(unsigned char *packet)
         int bytes = readByteSerialPort(buf_rc);
         
         if (bytes > 0) {
-            printf("BYTE RECEIVED %x\n", buf_rc[0]);
             if (state_machine_receiver(buf_rc[0], packet)) {
                 buf[2] = (frameNumber % 2 == 0) ? C_REJ0 : C_REJ1;
                 break;
@@ -303,7 +305,6 @@ int llread(unsigned char *packet)
     buf[3] = (A_RECEIVER ^ buf[2]);
     buf[4] = FLAG;
     int bytes = writeBytesSerialPort(buf, BUF_SIZE);
-    printf("%d bytes written\n", bytes);
     
     if (s != STOP_RCV) {
         return -1;
@@ -317,6 +318,106 @@ int llread(unsigned char *packet)
 int llclose(int showStatistics)
 {
     // TODO
+    STOP = FALSE;
+    alarmCount = 0;
+    alarmEnabled = FALSE;
+
+    if (!receiver) {
+        unsigned char buf_disc[BUF_SIZE] = {FLAG, A_SENDER, C_DISC, A_SENDER ^ C_DISC, FLAG};
+        printf("TRANSMITTER\n");
+
+        while (STOP == FALSE && alarmCount <= nRetransmissions)
+        {
+            if (alarmEnabled == FALSE) {
+                int bytes = writeBytesSerialPort(buf_disc, BUF_SIZE);
+                printf("%d bytes written\n", bytes);
+                setAlarm(timeout);
+            }
+
+            s = START;
+
+            while (s != STOP_RCV && alarmEnabled == TRUE)
+            {
+                int bytes = readByteSerialPort(buf_disc);
+                if (bytes > 0) {
+                    if (state_machine_end_connection(buf_disc[0], receiver)) {
+                        break;
+                    }
+                }
+            }
+            if (s == STOP_RCV) {
+                STOP = TRUE;
+            }
+        }
+        unsigned char buf_ua[BUF_SIZE] = {FLAG, A_SENDER, C_UA, A_SENDER ^ C_UA, FLAG};
+        int bytes = writeBytesSerialPort(buf_ua, BUF_SIZE);
+        printf("%d bytes written\n", bytes);
+        setAlarm(0);
+
+        if (alarmCount > nRetransmissions) {
+            return 1;
+        }
+
+        printf("STATISICS\n");
+        printf("----------------------------\n");
+        printf("NUMBER FRAMES SENT --> %d\n", frameNumber);
+        printf("----------------------------\n");
+        printf("RETRANSMISSIONS    --> %d\n", nRetransmissionsTotal);
+        printf("----------------------------\n");
+        
+
+    }
+    else if (receiver) {
+        unsigned char buf_disc[BUF_SIZE];
+        printf("RECEIVER\n");
+
+        s = START;
+
+        while (s != STOP_RCV)
+        {
+            int bytes = readByteSerialPort(buf_disc);
+            if (bytes > 0) {
+                if (state_machine_end_connection(buf_disc[0], receiver)) {
+                    continue;
+                }
+            }
+        }
+
+        STOP = FALSE;
+        alarmCount = 0;
+
+        unsigned char buf[BUF_SIZE] = {FLAG, A_RECEIVER, C_DISC, A_RECEIVER ^ C_DISC, FLAG};
+
+
+        while (STOP == FALSE && alarmCount <= nRetransmissions)
+        {
+            if (alarmEnabled == FALSE) {
+                int bytes = writeBytesSerialPort(buf, BUF_SIZE);
+                printf("%d bytes written\n", bytes);
+                setAlarm(timeout);
+            }
+
+            s = START;
+
+            while (s != STOP_RCV && alarmEnabled == TRUE)
+            {
+                int bytes = readByteSerialPort(buf_disc);
+                if (bytes > 0) {
+                    if (state_machine_end_connection(buf_disc[0], receiver)) {
+                        continue;
+                    }
+                }
+            }
+            if (s == STOP_RCV) {
+                STOP = TRUE;
+            }
+        }
+        if (alarmCount > nRetransmissions) {
+            return 1;
+        }
+        setAlarm(0);
+        printf("STATISTICS\n");
+    }
 
     int clstat = closeSerialPort();
     return clstat;

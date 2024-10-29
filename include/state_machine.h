@@ -19,6 +19,8 @@ typedef enum {
 
 int state_machine_connection(unsigned char byte, LinkLayerRole role);
 
+int state_machine_end_connection(unsigned char byte, volatile int receiver);
+
 int state_machine_transmitter(unsigned char byte);
 
 int state_machine_receiver(unsigned char byte, unsigned char *packet);
