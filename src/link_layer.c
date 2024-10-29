@@ -304,7 +304,7 @@ int llread(unsigned char *packet)
 
     buf[3] = (A_RECEIVER ^ buf[2]);
     buf[4] = FLAG;
-    int bytes = writeBytesSerialPort(buf, BUF_SIZE);
+    writeBytesSerialPort(buf, BUF_SIZE);
     
     if (s != STOP_RCV) {
         return -1;
