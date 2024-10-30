@@ -4,21 +4,6 @@
 #ifndef _LINK_LAYER_H_
 #define _LINK_LAYER_H_
 
-#define FLAG 0x7E
-#define A_SENDER 0x03
-#define A_RECEIVER 0x01
-#define C_SET 0x03
-#define C_UA 0x07
-#define C_RR0 0xAA
-#define C_RR1 0xAB
-#define C_REJ0 0x54
-#define C_REJ1 0x55
-#define C_DISC 0x0B
-#define C_0 0x00
-#define C_1 0x80
-#define ESC 0x7D
-#define STUFF 0x20
-
 typedef enum
 {
     LlTx,
@@ -37,7 +22,6 @@ typedef struct
 // SIZE of maximum acceptable payload.
 // Maximum number of bytes that application layer should send to link layer
 #define MAX_PAYLOAD_SIZE 1000
-#define DATA_SIZE 256
 
 // MISC
 #define FALSE 0

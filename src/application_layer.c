@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
+#define DATA_SIZE 256
+
 #include "manage_packet.h"
 
 void applicationLayer(const char *serialPort, const char *role, int baudRate,
