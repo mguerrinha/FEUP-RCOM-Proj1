@@ -47,7 +47,6 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
     unsigned char *packet;
     int STOP;
 
-
     switch (connectionParam.role)
     {
     case LlTx:
@@ -141,6 +140,7 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
 
         newFile = fopen((char *) filename, "wb+");
         STOP = FALSE;
+        int sequenceConfirm = -1;
 
         while (!STOP)
         {
@@ -155,11 +155,16 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
                 }
                 STOP = TRUE;
             }
-            else if (packetSize > 0) {
+            else if (packetSize > 0 && packet[0] == 2) {
                 totalReceived += packetSize-4;
                 printf("----------------\n");
                 printf("Progression %ld/%ld\n", totalReceived, fileSize);
                 printf("----------------\n");
+                if (packet[1] == sequenceConfirm) {
+                    perror("Error duplicated frame received");
+                    exit(-1);
+                }
+                sequenceConfirm = packet[1];
                 fwrite(packet+4, sizeof(unsigned char), packetSize-4, newFile);
             }
             else continue;

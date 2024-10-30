@@ -1,7 +1,6 @@
 #include "state_machine.h"
 #include <stdio.h>
 
-
 state s;
 extern unsigned int frameNumber;
 extern int i;

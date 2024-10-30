@@ -155,20 +155,6 @@ int llopen(LinkLayer connectionParameters)
 ////////////////////////////////////////////////
 int llwrite(const unsigned char *buf, int bufSize)
 {
-        // TODO
-        /*
-        recebe pacote de dados buf1 = [D1...Dn]
-        gera BCC2 = D1 ^ D2 ... ^ Dn
-        - buf2 = [D1...Dn, BCC2]
-
-        percorre buf2 e implementa stuffing
-        - se encontrar 0x7E substitui por 0x7D 0x5E
-        - se encontrar 0x7D substitui por 0x7D 0x5D
-
-        cria trama I(0) ou I(1) 
-
-        */
-
     int frameSize = 6 + bufSize;
     unsigned char *frame = (unsigned char*)malloc(frameSize);
     if (frame == NULL) {
@@ -329,8 +315,7 @@ int llclose(int showStatistics)
         while (STOP == FALSE && alarmCount <= nRetransmissions)
         {
             if (alarmEnabled == FALSE) {
-                int bytes = writeBytesSerialPort(buf_disc, BUF_SIZE);
-                printf("%d bytes written\n", bytes);
+                writeBytesSerialPort(buf_disc, BUF_SIZE);
                 setAlarm(timeout);
             }
 
@@ -350,8 +335,7 @@ int llclose(int showStatistics)
             }
         }
         unsigned char buf_ua[BUF_SIZE] = {FLAG, A_SENDER, C_UA, A_SENDER ^ C_UA, FLAG};
-        int bytes = writeBytesSerialPort(buf_ua, BUF_SIZE);
-        printf("%d bytes written\n", bytes);
+        writeBytesSerialPort(buf_ua, BUF_SIZE);
         setAlarm(0);
 
         if (alarmCount > nRetransmissions) {
@@ -392,8 +376,7 @@ int llclose(int showStatistics)
         while (STOP == FALSE && alarmCount <= nRetransmissions)
         {
             if (alarmEnabled == FALSE) {
-                int bytes = writeBytesSerialPort(buf, BUF_SIZE);
-                printf("%d bytes written\n", bytes);
+                writeBytesSerialPort(buf, BUF_SIZE);
                 setAlarm(timeout);
             }
 
