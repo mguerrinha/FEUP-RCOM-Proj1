@@ -13,27 +13,6 @@
 void applicationLayer(const char *serialPort, const char *role, int baudRate,
                       int nTries, int timeout, const char *filename)
 {
-        // TODO
-        /*
-        - criar estrutura "connectionParam" do tipo LinkLayer com os valores de 5 parâmetros que recebeu (não passa filename)
-        - invoca llopen passando o "connectionParam"
-
-        - se Tx
-        -- cria pacote START
-        -- invoca llwrite passando START
-        -- abre ficheiro "filename" em modo de leitura
-        -- enquanto não chega ao fim do ficheiro:
-        --- lê segmento de k bytes
-        --- cria pacote de dados
-        --- invoca llwrite passando pacote de dados
-        -- cria pacote END e invoca llwrite
-
-        - se Rx
-        -- enquanto não recebe pacote END:
-        --- invoca llread
-
-        - invoca llclose
-        */
 
     LinkLayerRole linkLayerRole;
 
@@ -66,6 +45,7 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
     FILE* file;
     FILE* newFile;
     unsigned char *packet;
+    int STOP;
 
 
     switch (connectionParam.role)
@@ -144,14 +124,15 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
         
         packet = (unsigned char *) malloc(DATA_SIZE+4);
         int packetSize = -1;
+        STOP = FALSE;
 
-        while (1)
+        while (!STOP)
         {
             packetSize = -1;
             packetSize = llread(packet);
             if (packetSize > 0 && packet[0] == 1) {
                 printf ("START PACKET RCV\n");
-                break;
+                STOP = TRUE;
             }
         }
 
@@ -159,9 +140,9 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
         size_t totalReceived = 0;
 
         newFile = fopen((char *) filename, "wb+");
+        STOP = FALSE;
 
-
-        while (1)
+        while (!STOP)
         {
             packetSize = -1;
             packetSize = llread(packet);
@@ -172,17 +153,14 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
                     perror ("Error closing serial port\n");
                     exit(-1);
                 }
-                break;
+                STOP = TRUE;
             }
             else if (packetSize > 0) {
                 totalReceived += packetSize-4;
                 printf("----------------\n");
                 printf("Progression %ld/%ld\n", totalReceived, fileSize);
                 printf("----------------\n");
-                unsigned char *buffer = (unsigned char*)malloc(packetSize-4);
-                parseData(packet, packetSize, buffer);
-                fwrite(buffer, sizeof(unsigned char), packetSize-4, newFile);
-                free(buffer);
+                fwrite(packet+4, sizeof(unsigned char), packetSize-4, newFile);
             }
             else continue;
         }

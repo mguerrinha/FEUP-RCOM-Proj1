@@ -78,8 +78,3 @@ size_t parseControlPacket(unsigned char *packet) {
     }
     return fileSize;
 }
-
-void parseData(unsigned char *packet, int packetSize, unsigned char *buffer) {
-    memcpy(buffer, packet+4, packetSize-4);
-    buffer += packetSize+4;
-}

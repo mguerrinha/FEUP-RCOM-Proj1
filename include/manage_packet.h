@@ -13,6 +13,4 @@ unsigned char *getPacketData(unsigned int sequence, unsigned char *data, unsigne
 
 size_t parseControlPacket(unsigned char *packet);
 
-void parseData(unsigned char *packet, int packetSize, unsigned char *buffer);
-
 #endif
