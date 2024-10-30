@@ -341,15 +341,17 @@ int llclose(int showStatistics)
         if (alarmCount > nRetransmissions) {
             return 1;
         }
-
-        printf("STATISICS\n");
-        printf("----------------------------\n");
-        printf("NUMBER FRAMES SENT --> %d\n", frameNumber);
-        printf("----------------------------\n");
-        printf("RETRANSMISSIONS    --> %d\n", nRetransmissionsTotal);
-        printf("----------------------------\n");
         
+        setAlarm(0);
 
+        if (showStatistics) {
+            printf("STATISICS\n");
+            printf("----------------------------\n");
+            printf("NUMBER FRAMES SENT --> %d\n", frameNumber);
+            printf("----------------------------\n");
+            printf("RETRANSMISSIONS    --> %d\n", nRetransmissionsTotal);
+            printf("----------------------------\n");
+        }
     }
     else if (receiver) {
         unsigned char buf_disc[BUF_SIZE];
@@ -398,11 +400,15 @@ int llclose(int showStatistics)
         if (alarmCount > nRetransmissions) {
             return 1;
         }
+
         setAlarm(0);
-        printf("STATISTICS\n");
-        printf("----------------------------\n");
-        printf("NUMBER FRAMES SENT --> %d\n", frameNumber);
-        printf("----------------------------\n");
+        
+        if (showStatistics) {
+            printf("STATISTICS\n");
+            printf("----------------------------\n");
+            printf("NUMBER FRAMES SENT --> %d\n", frameNumber);
+            printf("----------------------------\n");
+        }
     }
 
     int clstat = closeSerialPort();
