@@ -26,6 +26,7 @@ int state_machine_connection(unsigned char byte, LinkLayerRole role) {
                 }
                 else {
                     s = START;
+                    printf("ADDRESS FAILED\n");
                     return 1;
                 }
                 break;
@@ -39,6 +40,7 @@ int state_machine_connection(unsigned char byte, LinkLayerRole role) {
                 }
                 else {
                     s = START;
+                    printf("CONTROL FAILED\n");
                     return 1;
                 }
                 break;
@@ -52,6 +54,7 @@ int state_machine_connection(unsigned char byte, LinkLayerRole role) {
                 }
                 else {
                     s = START;
+                    printf("BCC FAILED\n");
                     return 1;
                 }
                 break;
@@ -62,6 +65,7 @@ int state_machine_connection(unsigned char byte, LinkLayerRole role) {
                 }
                 else {
                     s = START;
+                    printf("WRONG FINAL FLAG\n");
                     return 1;
                 }
                 break;
@@ -89,6 +93,7 @@ int state_machine_connection(unsigned char byte, LinkLayerRole role) {
                 }
                 else {
                     s = START;
+                    printf("ADDRESS FAILED\n");
                     return 1;
                 }
                 break;
@@ -102,6 +107,7 @@ int state_machine_connection(unsigned char byte, LinkLayerRole role) {
                 }
                 else {
                     s = START;
+                    printf("CONTROL FAILED\n");
                     return 1;
                 }
                 break;
@@ -115,6 +121,7 @@ int state_machine_connection(unsigned char byte, LinkLayerRole role) {
                 }
                 else {
                     s = START;
+                    printf("BCC FAILED\n");
                     return 1;
                 }
                 break;
@@ -125,6 +132,7 @@ int state_machine_connection(unsigned char byte, LinkLayerRole role) {
                 }
                 else {
                     s = START;
+                    printf("WRONG FINAL FLAG\n");
                     return 1;
                 }
                 break;
@@ -154,6 +162,7 @@ int state_machine_end_connection(unsigned char byte, volatile int receiver) {
                 }
                 else {
                     s = START;
+                    printf("ADRESS FAILED\n");
                     return 1;
                 }
                 break;
@@ -167,6 +176,7 @@ int state_machine_end_connection(unsigned char byte, volatile int receiver) {
                 }
                 else {
                     s = START;
+                    printf("CONTROL FAILED\n");
                     return 1;
                 }
                 break;
@@ -180,6 +190,7 @@ int state_machine_end_connection(unsigned char byte, volatile int receiver) {
                 }
                 else {
                     s = START;
+                    printf("BCC FAILED\n");
                     return 1;
                 }
                 break;
@@ -190,6 +201,7 @@ int state_machine_end_connection(unsigned char byte, volatile int receiver) {
                 }
                 else {
                     s = START;
+                    printf("WRONG FINAL FLAG\n");
                     return 1;
                 }
                 break;
@@ -217,6 +229,7 @@ int state_machine_end_connection(unsigned char byte, volatile int receiver) {
                 }
                 else {
                     s = START;
+                    printf("ADDRESS FAILED\n");
                     return 1;
                 }
                 break;
@@ -230,6 +243,7 @@ int state_machine_end_connection(unsigned char byte, volatile int receiver) {
                 }
                 else {
                     s = START;
+                    printf("CONTROL FAILED\n");
                     return 1;
                 }
                 break;
@@ -243,6 +257,7 @@ int state_machine_end_connection(unsigned char byte, volatile int receiver) {
                 }
                 else {
                     s = START;
+                    printf("BCC FAILED\n");
                     return 1;
                 }
                 break;
@@ -253,6 +268,7 @@ int state_machine_end_connection(unsigned char byte, volatile int receiver) {
                 }
                 else {
                     s = START;
+                    printf("WRONG FINAL FLAG\n");
                     return 1;
                 }
                 break;
@@ -282,6 +298,7 @@ int state_machine_transmitter(unsigned char byte) {
         }
         else {
             s = START;
+            printf("ADDRESS FAILED\n");
             return 1;
         }
         break;
@@ -295,6 +312,7 @@ int state_machine_transmitter(unsigned char byte) {
         }
         else {
             s = START;
+            printf("CONTROL FAILED\n");
             return 1;
         }
         break;
@@ -308,6 +326,7 @@ int state_machine_transmitter(unsigned char byte) {
         }
         else {
             s = START;
+            printf("BCC FAILED\n");
             return 1;
         }
         break;
@@ -318,6 +337,7 @@ int state_machine_transmitter(unsigned char byte) {
         }
         else {
             s = START;
+            printf("WRONG FINAL FLAG\n");
             return 1;
         }
         break;
@@ -347,7 +367,7 @@ int state_machine_receiver(unsigned char byte, unsigned char *packet) {
         }
         else {
             s = START;
-            printf("ADRESS FAILED\n");
+            printf("ADDRESS FAILED\n");
             return 1;
         }
         break;
@@ -418,7 +438,7 @@ int state_machine_receiver(unsigned char byte, unsigned char *packet) {
         }
         else {
             s = START;
-            printf("ESC?????\n");
+            printf("ESC ALONE?\n");
             return 1;
         }
         break;
