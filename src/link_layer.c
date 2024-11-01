@@ -272,6 +272,7 @@ int llclose(int showStatistics)
 
     if (!receiver) {
         unsigned char buf_disc[BUF_SIZE] = {FLAG, A_SENDER, C_DISC, A_SENDER ^ C_DISC, FLAG};
+        unsigned char buf[BUF_SIZE];
         printf("TRANSMITTER\n");
 
         while (STOP == FALSE && alarmCount <= nRetransmissions)
@@ -285,9 +286,9 @@ int llclose(int showStatistics)
 
             while (s != STOP_RCV && alarmEnabled == TRUE)
             {
-                int bytes = readByteSerialPort(buf_disc);
+                int bytes = readByteSerialPort(buf);
                 if (bytes > 0) {
-                    if (state_machine_end_connection(buf_disc[0], receiver)) {
+                    if (state_machine_end_connection(buf[0], receiver)) {
                         break;
                     }
                 }
@@ -368,7 +369,7 @@ int llclose(int showStatistics)
         if (showStatistics) {
             printf("STATISTICS\n");
             printf("----------------------------\n");
-            printf("NUMBER FRAMES SENT --> %d\n", frameNumber);
+            printf("NUMBER FRAMES RECEIVED --> %d\n", frameNumber);
             printf("----------------------------\n");
         }
     }
