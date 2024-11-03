@@ -1,7 +1,3 @@
-// Alarm example
-//
-// Modified by: Eduardo Nuno Almeida [enalmeida@fe.up.pt]
-
 #include <unistd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -25,11 +21,12 @@ void setSignal() {
     (void)signal(SIGALRM, alarmHandler);
 }
 
+// Set alarm to be triggered in t secons
 void setAlarm(int t)
 {
     if (alarmEnabled == FALSE)
     {
-        alarm(t); // Set alarm to be triggered in 3s
+        alarm(t); 
         alarmEnabled = TRUE;
     }
 }

@@ -57,10 +57,12 @@ int llopen(LinkLayer connectionParameters)
 
     if (connectionParameters.role == LlTx) {
         receiver = FALSE;
+
         unsigned char buf_set[BUF_SIZE] = {FLAG, A_SENDER, C_SET, A_SENDER^C_SET, FLAG};
         unsigned char buf_ua[BUF_SIZE];
         setSignal();
 
+        // Loop for write the Transmitter Supervision Frame every 3 seconds until receive the right Receiver Supervision Frame
         while (STOP == FALSE && alarmCount <= nRetransmissions)
         {
             if (alarmEnabled == FALSE) {
@@ -90,7 +92,8 @@ int llopen(LinkLayer connectionParameters)
         unsigned char buf_set[BUF_SIZE];
 
         s = START;
-
+    
+        // Loop for read the right Transmitter Supervision Frame
         while (s != STOP_RCV)
         {
             int bytes = readByteSerialPort(buf_set);
@@ -101,6 +104,7 @@ int llopen(LinkLayer connectionParameters)
             }
         }
 
+        // Write the confirmation Supervision Frame to confirm the connection establishment 
         unsigned char buf_ua[BUF_SIZE] = {FLAG, A_RECEIVER, C_UA, A_RECEIVER^C_UA, FLAG};
         int bytes = writeBytesSerialPort(buf_ua, BUF_SIZE);
         printf("%d bytes written\n", bytes);
@@ -125,7 +129,6 @@ int llwrite(const unsigned char *buf, int bufSize)
     }
 
     // Config the transmitter frame
-
     frame[0] = FLAG;
     frame[1] = A_SENDER;
     if (frameNumber % 2 == 0) {
@@ -190,7 +193,9 @@ int llwrite(const unsigned char *buf, int bufSize)
 
     int bytesWritten;
 
-
+    // Write a frame and wait for the response of the receiver
+    // If the Transmitter receive a Supervision Frame with a RR0 or RR1 control byte, conitue to the next frame, otherwise send again the same frame
+    // If the Transmitter doens't receive nothing in 3 seconds send the frame again
     while (STOP == FALSE && alarmCount <= nRetransmissions)
     {
         if (alarmEnabled == FALSE) {
@@ -234,6 +239,8 @@ int llread(unsigned char *packet)
     buf[1] = A_RECEIVER;
     i = 0;
 
+    // Wait until a frame is received
+    // If the frame is received with correct information send a Supervision frame with the RR1 or RR0 control byte, otherwise send the frame with REJ0 or REJ1 control byte
     while (s != STOP_RCV)
     {
         int bytes = readByteSerialPort(buf_rc);
@@ -252,6 +259,8 @@ int llread(unsigned char *packet)
 
     buf[3] = (A_RECEIVER ^ buf[2]);
     buf[4] = FLAG;
+
+    // Write the Supervision Frame
     writeBytesSerialPort(buf, BUF_SIZE);
     
     if (s != STOP_RCV) {
@@ -265,7 +274,6 @@ int llread(unsigned char *packet)
 ////////////////////////////////////////////////
 int llclose(int showStatistics)
 {
-    // TODO
     STOP = FALSE;
     alarmCount = 0;
     alarmEnabled = FALSE;
@@ -273,8 +281,8 @@ int llclose(int showStatistics)
     if (!receiver) {
         unsigned char buf_disc[BUF_SIZE] = {FLAG, A_SENDER, C_DISC, A_SENDER ^ C_DISC, FLAG};
         unsigned char buf[BUF_SIZE];
-        printf("TRANSMITTER\n");
 
+        // Loop for write the Transmitter Supervision Frame every 3 seconds until receive the right Receiver Supervision Frame
         while (STOP == FALSE && alarmCount <= nRetransmissions)
         {
             if (alarmEnabled == FALSE) {
@@ -318,10 +326,10 @@ int llclose(int showStatistics)
     }
     else if (receiver) {
         unsigned char buf_disc[BUF_SIZE];
-        printf("RECEIVER\n");
 
         s = START;
-
+        
+        // Loop for read the right Transmitter Supervision Frame
         while (s != STOP_RCV)
         {
             int bytes = readByteSerialPort(buf_disc);

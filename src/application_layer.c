@@ -12,6 +12,7 @@
 
 #include "manage_packet.h"
 
+// Application layer main function.
 void applicationLayer(const char *serialPort, const char *role, int baudRate,
                       int nTries, int timeout, const char *filename)
 {
@@ -70,17 +71,22 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
 
         unsigned int bufSize;
 
+        // Get the control packet to establish connection
         unsigned char *controlStart = getControlPacket(1, filename, fileStat.st_size, &bufSize);
 
+        // Call llwrite to send the control packet
         if (llwrite(controlStart, bufSize) == -1) {
             perror("Error: Start packet error\n");
             exit(-1);
         }
 
         unsigned int sequence = 0;
+        
+        // Get all content of the file we want to send
         unsigned char *content = getData(file, fileStat.st_size);
         size_t bytesLeft = fileStat.st_size;
 
+        // Loop to send all the content of the file
         while (bytesLeft > 0)
         {
             int dataSize = bytesLeft > (size_t) DATA_SIZE ? DATA_SIZE : bytesLeft;
@@ -90,6 +96,8 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
             unsigned char *data = (unsigned char *) malloc(dataSize);
             memcpy(data, content, dataSize);
             unsigned int packetSize;
+
+            // Construct the packet
             unsigned char *packet = getPacketData(sequence, data, dataSize, &packetSize);
 
             if (llwrite(packet, packetSize) == -1) {
@@ -102,8 +110,11 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
             sequence = (sequence + 1) % 100;
         }
         
+        // Get the control packet to close connection
         unsigned char *controlEnd = getControlPacket(3, filename, fileStat.st_size, &bufSize);
         printf("END PACKET\n");
+
+        // Call llwrite to send control packet
         if (llwrite(controlEnd, bufSize) == -1) {
             perror("Error: End packet error\n");
             exit(-1);
@@ -127,6 +138,7 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
         int packetSize = -1;
         STOP = FALSE;
 
+        // Loop to receive start packet
         while (!STOP)
         {
             packetSize = -1;
@@ -137,6 +149,7 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
             }
         }
 
+        // Get the size of the file we will receive
         size_t fileSize = parseControlPacket(packet);
         size_t totalReceived = 0;
 
@@ -144,11 +157,13 @@ void applicationLayer(const char *serialPort, const char *role, int baudRate,
         STOP = FALSE;
         int sequenceConfirm = -1;
 
+        // Loop to receive all data
         while (!STOP)
         {
             packetSize = -1;
             packetSize = llread(packet);
-
+            
+            // End packet received
             if (packet[0] == 3) {
                 printf("END PACKET RCV\n");
                 if (llclose(1) == -1) {

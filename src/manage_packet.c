@@ -1,5 +1,6 @@
 #include "manage_packet.h"
 
+// Construction of a control Packet
 unsigned char *getControlPacket(const unsigned int control, const char *filename, unsigned int filesize, unsigned int *bufSize) {
     int L1;
     unsigned int numBits = 0;
@@ -41,6 +42,7 @@ unsigned char *getControlPacket(const unsigned int control, const char *filename
     return packet;
 }
 
+// Get all the data from the file to be transfered
 unsigned char *getData(FILE *file, size_t fileSize) {
     unsigned char *content = (unsigned char *) malloc (fileSize);
 
@@ -54,6 +56,7 @@ unsigned char *getData(FILE *file, size_t fileSize) {
     return content;
 }
 
+// Construction of the data Packet
 unsigned char *getPacketData(unsigned int sequence, unsigned char *data, unsigned int dataSize, unsigned int *packetSize) {
     *packetSize = 4 + dataSize;
     unsigned char *packet = (unsigned char *) malloc(*packetSize);
@@ -67,6 +70,7 @@ unsigned char *getPacketData(unsigned int sequence, unsigned char *data, unsigne
     return packet;
 }
 
+// Parse the control Packet and take all the necessary information 
 size_t parseControlPacket(unsigned char *packet) {
     unsigned char nFileSizeBytes = packet[2];
     unsigned char fileSizeAux[nFileSizeBytes];

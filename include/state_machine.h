@@ -18,6 +18,7 @@
 #define ESC 0x7D
 #define STUFF 0x20
 
+// States to confirm frames and packets
 typedef enum {
     START,
     FLAG_RCV,
@@ -32,12 +33,16 @@ typedef enum {
     STOP_RCV
 } state;
 
+// State machine to confirm the bytes received from the connection fase
 int state_machine_connection(unsigned char byte, LinkLayerRole role);
 
+// State machine to confirm the bytes received from the end connection fase
 int state_machine_end_connection(unsigned char byte, volatile int receiver);
 
+// State machine to confirm the bytes received by the Transmitter
 int state_machine_transmitter(unsigned char byte);
 
+// State machine to confirm the bytes received by the Receiver
 int state_machine_receiver(unsigned char byte, unsigned char *packet);
 
 

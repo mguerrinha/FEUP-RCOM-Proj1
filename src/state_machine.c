@@ -7,6 +7,7 @@ extern int i;
 unsigned char bcc2;
 unsigned char bcc2_rcv;
 
+// State machine to confirm the bytes received from the connection fase
 int state_machine_connection(unsigned char byte, LinkLayerRole role) {
     if (role == LlRx) {
         switch (s)
@@ -143,6 +144,7 @@ int state_machine_connection(unsigned char byte, LinkLayerRole role) {
     return 0;
 }
 
+// State machine to confirm the bytes received from the end connection fase
 int state_machine_end_connection(unsigned char byte, volatile int receiver) {
     if (receiver) {
         switch (s)
@@ -279,6 +281,7 @@ int state_machine_end_connection(unsigned char byte, volatile int receiver) {
     return 0;
 }
 
+// State machine to confirm the bytes received by the Transmitter
 int state_machine_transmitter(unsigned char byte) {
     unsigned char control = (frameNumber % 2 == 0) ? C_RR1 : C_RR0;
     switch (s)
@@ -347,6 +350,7 @@ int state_machine_transmitter(unsigned char byte) {
     return 0;
 }
 
+// State machine to confirm the bytes received by the Receiver
 int state_machine_receiver(unsigned char byte, unsigned char *packet) {
     unsigned char control = (frameNumber % 2 == 0) ? C_0 : C_1;
     
